@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap');
+
+@layer base {
+  html {
+    @apply antialiased scroll-smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-text-primary;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,102,241,0.2) 0%, transparent 65%),
+      radial-gradient(ellipse 50% 40% at 85% 85%, rgba(168,85,247,0.1) 0%, transparent 55%);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: Inter, system-ui, sans-serif;
+    @apply font-bold text-text-primary;
+  }
+
+  h1 { @apply text-3xl sm:text-4xl lg:text-5xl leading-tight; }
+  h2 { @apply text-2xl sm:text-3xl leading-snug; }
+  h3 { @apply text-lg sm:text-xl leading-normal; }
+
+  a { @apply transition-colors duration-200; }
+  button { @apply transition-all duration-200; }
+  input, textarea, select { @apply transition-colors duration-200; }
+}
+
+@layer components {
+  .container-safe {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #818CF8 0%, #A78BFA 50%, #C084FC 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-blue {
+    background: linear-gradient(135deg, #60A5FA 0%, #818CF8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass {
+    background: rgba(9, 14, 28, 0.75);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(28, 38, 69, 0.9);
+  }
+
+  .glass-light {
+    background: rgba(16, 23, 40, 0.6);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+  }
+
+  .btn-primary-glow {
+    background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%);
+    box-shadow: 0 0 24px rgba(99,102,241,0.45), 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .btn-primary-glow:hover {
+    box-shadow: 0 0 36px rgba(99,102,241,0.6), 0 4px 20px rgba(0,0,0,0.5);
+    transform: translateY(-1px);
+  }
+
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+  .card-hover:hover {
+    box-shadow: 0 8px 48px rgba(0,0,0,0.6), 0 1px 0 rgba(99,102,241,0.15);
+    transform: translateY(-1px);
+  }
+
+  .btn-focus {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .backdrop-glass { @apply glass; }
+
+  .smooth-transition { @apply transition-all duration-300 ease-out; }
+
+  .section-space { @apply py-12 sm:py-16 lg:py-20; }
+
+  .badge-success { background: rgba(52,211,153,0.12); color: #34D399; border: 1px solid rgba(52,211,153,0.25); border-radius: 9999px; }
+  .badge-warning { background: rgba(251,191,36,0.12); color: #FBBF24; border: 1px solid rgba(251,191,36,0.25); border-radius: 9999px; }
+  .badge-error   { background: rgba(248,113,113,0.12); color: #F87171; border: 1px solid rgba(248,113,113,0.25); border-radius: 9999px; }
+  .badge-brand   { background: rgba(99,102,241,0.12); color: #818CF8; border: 1px solid rgba(99,102,241,0.25); border-radius: 9999px; }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  .animation-delay-1 { animation-delay: 100ms; }
+  .animation-delay-2 { animation-delay: 200ms; }
+  .animation-delay-3 { animation-delay: 300ms; }
+  .animation-delay-4 { animation-delay: 400ms; }
+
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(99,102,241,0.35);
+    border-radius: 2px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(99,102,241,0.55);
+  }
+}
+
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
