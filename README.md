@@ -413,7 +413,6 @@ Your backend is now **production-ready** with:
 ---
 
 **Project**: Interview Buddy - AI Interview Platform  
-<<<<<<< HEAD
 **Status**: ✅ Backend Complete  
 **Start Date**: 12 dec,2025
 =======
