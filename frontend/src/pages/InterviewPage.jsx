@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { completeInterview, fetchInterview, submitAnswer } from '../api/interviewsApi';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { TextArea } from '../components/ui/TextField';
 import { ProgressRing } from '../components/ui/Premium';
@@ -17,10 +16,50 @@ function formatTime(seconds) {
 
 function getScoreColor(score) {
   const s = score * 10;
-  if (s >= 90) return 'brand';
-  if (s >= 80) return 'success';
-  if (s >= 60) return 'warning';
+  if (s >= 85) return 'brand';
+  if (s >= 70) return 'success';
+  if (s >= 50) return 'warning';
   return 'danger';
+}
+
+function IconClock({ className = 'h-4 w-4' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function IconLightbulb({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+    </svg>
+  );
+}
+
+function IconCheck({ className = 'h-4 w-4' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+  );
+}
+
+function IconTarget({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 12H18M7.757 15.243l-1.59 1.59M6 12H4.5m15.364 6.364l-1.591-1.591M12 18.75a6.75 6.75 0 100-13.5 6.75 6.75 0 000 13.5z" />
+    </svg>
+  );
+}
+
+function IconCheckCircle({ className = 'h-4 w-4' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
 }
 
 export function InterviewPage() {
@@ -34,7 +73,6 @@ export function InterviewPage() {
   const [elapsed, setElapsed] = useState(0);
   const [autosaved, setAutosaved] = useState(false);
   
-  // AI Feedback Modal state
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [currentEvaluation, setCurrentEvaluation] = useState(null);
 
@@ -63,14 +101,20 @@ export function InterviewPage() {
     (async () => {
       try {
         const data = await load();
-        if (!cancelled && data) {
-          setInterview(data);
+        if (cancelled || !data) return;
+        setInterview(data);
+        if (!indexInitialized.current && data.questions?.length) {
+          const firstUnanswered = data.questions.findIndex(
+            (q) => !q.userAnswer && q.score === undefined
+          );
+          const targetIndex = firstUnanswered >= 0 ? firstUnanswered : 0;
+          setIndex(targetIndex);
+          setAnswer(data.questions[targetIndex]?.userAnswer || '');
+          indexInitialized.current = true;
+          questionStartRef.current = Date.now();
         }
       } catch (e) {
-        if (!cancelled) {
-          toast.error(getErrorMessage(e));
-          navigate('/dashboard');
-        }
+        if (!cancelled) toast.error(getErrorMessage(e));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -78,91 +122,90 @@ export function InterviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [load, navigate]);
+  }, [load]);
+
+  const questions = interview?.questions || [];
+  const current = questions[index];
+  const total = questions.length;
 
   useEffect(() => {
-    if (!interview?.questions?.length || indexInitialized.current) return;
-    const firstOpen = interview.questions.findIndex((q) => !q.userAnswer?.trim());
-    if (firstOpen === -1) {
-      setIndex(Math.max(0, interview.questions.length - 1));
-    } else {
-      setIndex(firstOpen);
-    }
-    indexInitialized.current = true;
-  }, [interview]);
-
-  useEffect(() => {
-    if (!interview?.questions?.[index]) return;
-    const q = interview.questions[index];
-    setAnswer(q.userAnswer || '');
-    questionStartRef.current = Date.now();
-    setElapsed(0);
-  }, [interview, index]);
-
-  useEffect(() => {
-    if (!interview?.questions?.length) return;
-    
-    const timerInterval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - questionStartRef.current) / 1000));
+    if (loading || !interview) return;
+    const interval = setInterval(() => {
+      setElapsed((prev) => prev + 1);
     }, 1000);
-    
-    return () => clearInterval(timerInterval);
-  }, [index, interview?.questions?.length]);
+    return () => clearInterval(interval);
+  }, [loading, interview]);
 
-  // Auto-save answer every 5 seconds if changed
   useEffect(() => {
-    const autoSaveTimer = setTimeout(async () => {
-      if (answer.trim() && interview?.questions?.[index]?.userAnswer !== answer.trim()) {
-        try {
-          const timeOnQuestion = Math.floor((Date.now() - questionStartRef.current) / 1000);
-          await submitAnswer(id, {
-            questionIndex: index,
-            answer: answer.trim(),
-            timeTaken: timeOnQuestion
-          });
-          setAutosaved(true);
-          setTimeout(() => setAutosaved(false), 2000);
-        } catch (e) {
-          // Fail silently on auto-save
+    if (!current) return;
+    setAnswer(current.userAnswer || '');
+    questionStartRef.current = Date.now();
+  }, [index, current]);
+
+  useEffect(() => {
+    if (!current || current.userAnswer === answer) return;
+    const handler = setTimeout(() => {
+      localStorage.setItem(`interview_${id}_q${index}`, answer);
+      setAutosaved(true);
+      setTimeout(() => setAutosaved(false), 2000);
+    }, 1500);
+
+    return () => clearTimeout(handler);
+  }, [answer, current, id, index]);
+
+  const proceedToNext = async () => {
+    const fresh = await load();
+    if (!fresh) return;
+    setInterview(fresh);
+
+    if (index >= total - 1) {
+      setSaving(true);
+      try {
+        const finishRes = await completeInterview(id);
+        if (!finishRes.success) {
+          throw new Error(finishRes.message || 'Could not complete interview');
         }
+        toast.success('Interview successfully completed!');
+        navigate(`/results/${id}`);
+      } catch (err) {
+        toast.error(getErrorMessage(err));
+      } finally {
+        setSaving(false);
       }
-    }, 5000);
-
-    return () => clearTimeout(autoSaveTimer);
-  }, [answer, index, interview, id]);
-
-  const total = interview?.totalQuestions || 0;
-  const current = interview?.questions?.[index];
+    } else {
+      setIndex((i) => i + 1);
+    }
+  };
 
   const handleNext = async () => {
-    if (!current) return;
     if (!answer.trim()) {
-      toast.error('Please enter your answer before continuing.');
+      toast.error('Please type your response before proceeding.');
       return;
     }
+    const qId = current?._id || current?.questionId;
+    if (!qId) {
+      toast.error('Question id missing');
+      return;
+    }
+
+    const timeTaken = Math.max(1, Math.round((Date.now() - questionStartRef.current) / 1000));
     setSaving(true);
     try {
-      const timeOnQuestion = Math.floor((Date.now() - questionStartRef.current) / 1000);
-      const resSubmit = await submitAnswer(id, {
-        questionIndex: index,
-        answer: answer.trim(),
-        timeTaken: timeOnQuestion
+      const res = await submitAnswer(id, {
+        questionId: qId,
+        userAnswer: answer.trim(),
+        timeTaken,
       });
-      
-      if (!resSubmit.success) {
-        throw new Error(resSubmit.message || 'Failed to save answer');
+
+      if (!res.success) {
+        throw new Error(res.message || 'Failed to submit response');
       }
 
-      // Check if AI evaluation was returned
-      const evaluation = resSubmit.data?.evaluation || resSubmit.evaluation;
-      
-      if (evaluation) {
-        // Show detailed evaluation in modal
-        setCurrentEvaluation(evaluation);
+      if (res.data?.evaluation) {
+        setCurrentEvaluation(res.data.evaluation);
         setShowFeedbackModal(true);
-        toast.success(`Scored: ${evaluation.score}/10`);
       } else {
-        // Fallback: Proceed directly if AI evaluation is not active
+        toast.success('Answer recorded!');
         await proceedToNext();
       }
     } catch (e) {
@@ -170,24 +213,6 @@ export function InterviewPage() {
     } finally {
       setSaving(false);
     }
-  };
-
-  const proceedToNext = async () => {
-    const isLast = index >= total - 1;
-    if (isLast) {
-      const resComplete = await completeInterview(id);
-      if (!resComplete.success) {
-        throw new Error(resComplete.message || 'Could not complete interview');
-      }
-      toast.success('Interview completed! 🎉');
-      navigate(`/results/${id}`);
-      return;
-    }
-
-    toast.success('Answer saved!');
-    const refreshed = await load();
-    if (refreshed) setInterview(refreshed);
-    setIndex((i) => i + 1);
   };
 
   const handleModalClose = async () => {
@@ -203,11 +228,11 @@ export function InterviewPage() {
     return (
       <div className="max-w-5xl mx-auto space-y-8 animate-pulse">
         <div className="flex justify-between items-center">
-          <div className="h-10 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg" />
-          <div className="h-12 w-28 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+          <div className="h-10 w-48 bg-slate-800 rounded-lg" />
+          <div className="h-12 w-28 bg-slate-800 rounded-2xl" />
         </div>
-        <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-        <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        <div className="h-32 bg-slate-800 rounded-2xl" />
+        <div className="h-64 bg-slate-800 rounded-2xl" />
       </div>
     );
   }
@@ -218,46 +243,43 @@ export function InterviewPage() {
 
   return (
     <div className="max-w-7xl mx-auto grid gap-8 lg:grid-cols-3 items-start">
-      {/* Main Interview Panel */}
       <div className="lg:col-span-2 space-y-6">
         
-        {/* Timer, Category and Progress Bar */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white/70 dark:border-slate-800 dark:bg-slate-900/40 backdrop-blur-sm p-6 space-y-4">
+        {/* Progress & Timer Header */}
+        <div className="rounded-3xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-6 sm:p-7 space-y-5 shadow-xl">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <span className="text-xs font-semibold tracking-wider text-blue-600 dark:text-blue-400 uppercase">
+              <span className="text-xs font-semibold tracking-wider text-indigo-400 uppercase">
                 {interview.domain} · {interview.difficulty}
               </span>
-              <h1 className="text-xl font-bold font-display text-slate-900 dark:text-white mt-1">
+              <h1 className="text-xl sm:text-2xl font-bold font-display text-white mt-1">
                 Question {index + 1} of {total}
               </h1>
             </div>
             
-            {/* Minimalist Clock Timer */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-850 bg-slate-50 dark:bg-slate-950 font-mono text-sm font-semibold text-slate-700 dark:text-slate-300">
-              <span className="text-blue-500 animate-pulse">⏱️</span>
+            <div className="flex items-center gap-2.5 px-4 py-2 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 font-mono text-sm font-bold text-white shadow-brand-sm">
+              <span className="text-indigo-400"><IconClock /></span>
               {formatTime(elapsed)}
             </div>
           </div>
 
-          {/* Premium Animated Progress Bar */}
-          <div className="space-y-1">
-            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden">
+          <div className="space-y-2">
+            <div className="h-2.5 w-full bg-slate-800 rounded-full overflow-hidden shadow-inner">
               <motion.div
-                className="h-full bg-blue-600 rounded-full"
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-pink-500 shadow-brand-sm"
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPercentage}%` }}
                 transition={{ type: 'spring', stiffness: 80, damping: 15 }}
               />
             </div>
-            <div className="flex justify-between text-[11px] text-slate-450 dark:text-slate-500 font-medium">
+            <div className="flex justify-between text-xs text-slate-400 font-medium">
               <span>Progress</span>
               <span>{progressPercentage}% Completed</span>
             </div>
           </div>
         </div>
 
-        {/* Question Panel */}
+        {/* Question Prompt Card */}
         <AnimatePresence mode="wait">
           <motion.div
             key={index}
@@ -266,27 +288,27 @@ export function InterviewPage() {
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
-            <Card className="border-l-4 border-l-blue-600 dark:border-l-blue-500 bg-white dark:bg-slate-900 p-6 shadow-md relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 text-[10px] font-bold text-blue-500/20 select-none uppercase font-mono">
+            <div className="rounded-3xl border border-white/10 border-l-4 border-l-indigo-500 bg-slate-900/80 backdrop-blur-xl p-7 sm:p-8 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 text-[10px] font-bold text-indigo-400/40 select-none uppercase font-mono">
                 {current.category || 'Domain Question'}
               </div>
               <div className="space-y-2">
-                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 font-mono">
+                <span className="text-xs font-semibold text-indigo-400 font-mono tracking-wider">
                   SCENARIO / CONCEPT
                 </span>
-                <p className="text-lg leading-relaxed text-slate-900 dark:text-slate-100 font-medium">
+                <p className="text-lg sm:text-xl leading-relaxed text-white font-medium">
                   {current.questionText || current.question}
                 </p>
               </div>
-            </Card>
+            </div>
           </motion.div>
         </AnimatePresence>
 
-        {/* Answer Input Panel */}
-        <Card className="space-y-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 shadow-md">
+        {/* Answer Box */}
+        <div className="rounded-3xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-7 space-y-5 shadow-xl">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label htmlFor="answer" className="text-sm font-semibold text-slate-900 dark:text-slate-250">
+              <label htmlFor="answer" className="text-xs font-bold uppercase tracking-wider text-slate-300">
                 Your Professional Answer
               </label>
               <div className="flex items-center gap-2">
@@ -295,13 +317,13 @@ export function InterviewPage() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
-                    className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium"
+                    className="inline-flex items-center gap-1 text-xs text-emerald-400 font-medium"
                   >
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
                     Auto-saved
                   </motion.span>
                 )}
-                <span className="text-xs text-slate-400 dark:text-slate-500">
+                <span className="text-xs text-slate-400">
                   {wordCount} words · {charCount} chars
                 </span>
               </div>
@@ -309,23 +331,21 @@ export function InterviewPage() {
             
             <TextArea
               id="answer"
-              placeholder="Provide a detailed answer with examples and best practices. Your answer will be evaluated by an AI technical interviewer."
+              placeholder="Provide a detailed answer with architecture considerations, trade-offs, and real-world best practices. Your answer will be evaluated by the AI interviewer."
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               rows={11}
               disabled={saving}
-              className="font-sans text-base leading-relaxed dark:bg-slate-950 dark:border-slate-850 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/80">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-white/10">
             <Button
               variant="secondary"
               type="button"
               onClick={() => navigate('/dashboard')}
               disabled={saving}
-              className="w-full sm:w-auto border-slate-250 dark:border-slate-700 text-slate-700 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-950"
+              className="w-full sm:w-auto"
             >
               Save & Exit to Dashboard
             </Button>
@@ -333,91 +353,90 @@ export function InterviewPage() {
               type="button"
               loading={saving}
               onClick={handleNext}
-              className="w-full sm:w-auto bg-blue-650 hover:bg-blue-600 text-white font-medium"
+              variant="primary"
+              className="w-full sm:w-auto font-semibold shadow-brand-sm"
             >
-              {index >= total - 1 ? 'Finish & Evaluate' : 'Submit Answer'}
+              {index >= total - 1 ? 'Finish & Evaluate →' : 'Submit Answer →'}
             </Button>
           </div>
-        </Card>
+        </div>
       </div>
 
-      {/* Pro Tips Sidebar */}
+      {/* Right Sidebar: Tips & Topics */}
       <div className="space-y-6">
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1, duration: 0.4 }}
-          className="rounded-2xl border border-slate-200/80 bg-white/70 p-6 dark:border-slate-800 dark:bg-slate-900/40 backdrop-blur-sm shadow-md space-y-5"
-        >
-          <div>
-            <h3 className="font-display font-semibold text-slate-900 dark:text-white">💡 Pro Tips</h3>
-            <p className="text-xs text-slate-450 dark:text-slate-400 mt-1">Make your response more impact-driven</p>
+        <div className="rounded-3xl border border-white/10 bg-slate-900/70 backdrop-blur-xl p-6 sm:p-7 space-y-5 shadow-xl">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30">
+              <IconLightbulb className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-display font-bold text-white text-base">Pro Tips</h3>
+              <p className="text-xs text-slate-400">Make your response more impact-driven</p>
+            </div>
           </div>
 
-          <ul className="space-y-3.5 text-xs text-slate-500 dark:text-slate-400">
+          <ul className="space-y-3.5 text-xs text-slate-300">
             <li className="flex items-start gap-2.5">
-              <span className="text-blue-500 text-sm">✓</span>
+              <span className="text-emerald-400 mt-0.5"><IconCheck className="h-4 w-4" /></span>
               <span>
-                <strong className="text-slate-800 dark:text-slate-300">STAR Method:</strong> Detail the Situation, Task, Action, and Result for practical scenarios.
+                <strong className="text-white">STAR Method:</strong> Detail the Situation, Task, Action, and Result for practical scenarios.
               </span>
             </li>
             <li className="flex items-start gap-2.5">
-              <span className="text-blue-500 text-sm">✓</span>
+              <span className="text-emerald-400 mt-0.5"><IconCheck className="h-4 w-4" /></span>
               <span>
-                <strong className="text-slate-800 dark:text-slate-300">Trade-offs:</strong> Mention architectural trade-offs or alternative options to show seniority.
+                <strong className="text-white">Trade-offs:</strong> Mention architectural trade-offs or alternative options to show seniority.
               </span>
             </li>
             <li className="flex items-start gap-2.5">
-              <span className="text-blue-500 text-sm">✓</span>
+              <span className="text-emerald-400 mt-0.5"><IconCheck className="h-4 w-4" /></span>
               <span>
-                <strong className="text-slate-800 dark:text-slate-300">Edge Cases:</strong> Explicitly mention error cases, scaling limits, or accessibility concerns.
+                <strong className="text-white">Edge Cases:</strong> Explicitly mention error cases, scaling limits, or security concerns.
               </span>
             </li>
           </ul>
 
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80">
-            <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Shortcuts</h4>
-            <div className="flex gap-2 text-[10px] text-slate-450 dark:text-slate-500 font-mono">
-              <span className="bg-slate-100 dark:bg-slate-950 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800">Ctrl + Enter</span>
+          <div className="pt-4 border-t border-white/10">
+            <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Shortcuts</h4>
+            <div className="flex gap-2 text-[10px] text-slate-300 font-mono">
+              <span className="bg-slate-800 px-2 py-0.5 rounded border border-white/10">Ctrl + Enter</span>
               <span className="self-center">Submit answer</span>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Expected Evaluation Criteria (if present) */}
         {current.expectedTopics && current.expectedTopics.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            className="rounded-2xl border border-slate-200/80 bg-white/70 p-6 dark:border-slate-800 dark:bg-slate-900/40 backdrop-blur-sm shadow-md"
-          >
-            <h3 className="font-display font-semibold text-slate-900 dark:text-white mb-2">🎯 Topics to Address</h3>
+          <div className="rounded-3xl border border-white/10 bg-slate-900/70 backdrop-blur-xl p-6 sm:p-7 shadow-xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+                <IconTarget className="h-5 w-5" />
+              </div>
+              <h3 className="font-display font-bold text-white text-base">Topics to Address</h3>
+            </div>
             <div className="flex flex-wrap gap-2">
               {current.expectedTopics.map((topic, i) => (
                 <span
                   key={i}
-                  className="bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-650 dark:text-slate-400 text-xs px-2.5 py-1 rounded-lg"
+                  className="bg-slate-800/90 border border-white/10 text-slate-200 text-xs px-3 py-1 rounded-lg"
                 >
                   {topic}
                 </span>
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
 
-      {/* Real-time AI Evaluation Feedback Modal */}
+      {/* AI Evaluation Modal */}
       <AnimatePresence>
         {showFeedbackModal && currentEvaluation && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto"
+              className="rounded-3xl border border-indigo-500/30 bg-slate-900 p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto text-white relative"
             >
-              {/* Top Score Display */}
               <div className="flex flex-col items-center text-center">
                 <ProgressRing 
                   percentage={(currentEvaluation.score / 10) * 100}
@@ -425,7 +444,7 @@ export function InterviewPage() {
                   strokeWidth={6}
                   color={getScoreColor(currentEvaluation.score)}
                 />
-                <h3 className="text-2xl font-extrabold font-display text-slate-900 dark:text-white mt-3">
+                <h3 className="text-2xl font-extrabold font-display text-white mt-3">
                   Score: {currentEvaluation.score}/10
                 </h3>
                 <p className="text-xs font-semibold tracking-wider uppercase text-slate-400 mt-1 font-mono">
@@ -433,24 +452,22 @@ export function InterviewPage() {
                 </p>
               </div>
 
-              {/* General Feedback */}
               <div className="space-y-1.5">
-                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-250 uppercase tracking-wider">AI Evaluation</h4>
-                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-450 bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-850">
+                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">AI Evaluation</h4>
+                <p className="text-sm leading-relaxed text-slate-200 bg-slate-800/80 p-4 rounded-2xl border border-white/10">
                   {currentEvaluation.feedback}
                 </p>
               </div>
 
-              {/* Strengths and Area to Improve Grid */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-450 uppercase tracking-wider flex items-center gap-1.5">
-                    ✅ Strengths
+                  <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <IconCheckCircle className="h-4 w-4" /> Strengths
                   </h4>
-                  <ul className="space-y-1">
+                  <ul className="space-y-1.5">
                     {currentEvaluation.strengths?.map((s, idx) => (
-                      <li key={idx} className="text-xs text-slate-650 dark:text-slate-400 flex items-start gap-1.5">
-                        <span className="text-emerald-500">•</span>
+                      <li key={idx} className="text-xs text-slate-300 flex items-start gap-2 bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20">
+                        <span className="text-emerald-400 font-bold">•</span>
                         <span>{s}</span>
                       </li>
                     ))}
@@ -461,13 +478,13 @@ export function InterviewPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-                    💡 Growth Areas
+                  <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <IconLightbulb className="h-4 w-4" /> Growth Areas
                   </h4>
-                  <ul className="space-y-1">
+                  <ul className="space-y-1.5">
                     {currentEvaluation.improvements?.map((imp, idx) => (
-                      <li key={idx} className="text-xs text-slate-650 dark:text-slate-400 flex items-start gap-1.5">
-                        <span className="text-rose-400">•</span>
+                      <li key={idx} className="text-xs text-slate-300 flex items-start gap-2 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20">
+                        <span className="text-amber-400 font-bold">•</span>
                         <span>{imp}</span>
                       </li>
                     ))}
@@ -478,25 +495,24 @@ export function InterviewPage() {
                 </div>
               </div>
 
-              {/* Model Answer */}
               {currentEvaluation.ideal_answer && (
-                <div className="space-y-1.5 bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100/50 dark:border-blue-900/30 p-4 rounded-xl">
-                  <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                <div className="space-y-1.5 bg-indigo-950/40 border border-indigo-500/30 p-4 rounded-2xl">
+                  <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
                     Model Response
                   </h4>
-                  <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-350">
+                  <p className="text-xs leading-relaxed text-slate-300 mt-1">
                     {currentEvaluation.ideal_answer}
                   </p>
                 </div>
               )}
 
-              {/* Close Button / Continue */}
               <div className="pt-2">
                 <Button
                   onClick={handleModalClose}
-                  className="w-full bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200"
+                  variant="primary"
+                  className="w-full shadow-brand"
                 >
-                  {index >= total - 1 ? 'Finish & Generate Report →' : 'Next Question →'}
+                  {index >= total - 1 ? 'Finish & Generate Report →' : 'Continue to Next Question →'}
                 </Button>
               </div>
             </motion.div>

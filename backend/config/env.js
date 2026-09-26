@@ -19,6 +19,7 @@ const envSchema = Joi.object({
   BODY_LIMIT_MB: Joi.number().min(0.1).max(50).default(50),
   MONGO_MAX_POOL_SIZE: Joi.number().integer().min(5).max(100).default(10),
   LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly').optional(),
+  GEMINI_API_KEY: Joi.string().optional(),
   SHUTDOWN_TIMEOUT_MS: Joi.number().integer().min(1000).max(120000).default(10000)
 })
   .unknown(true)
@@ -59,6 +60,7 @@ function loadEnv() {
     bodyLimitMb: value.BODY_LIMIT_MB,
     mongoMaxPoolSize: value.MONGO_MAX_POOL_SIZE,
     logLevel: value.LOG_LEVEL,
+    geminiApiKey: value.GEMINI_API_KEY || null,
     shutdownTimeoutMs: value.SHUTDOWN_TIMEOUT_MS
   };
 }

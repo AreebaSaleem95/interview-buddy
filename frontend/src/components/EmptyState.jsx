@@ -1,8 +1,9 @@
 export function EmptyState({ title, description, action }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-6 py-14 text-center dark:border-slate-700 dark:bg-slate-900/40">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-indigo-500/30 bg-slate-900/60 backdrop-blur-xl px-8 py-16 text-center shadow-xl relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 via-transparent to-transparent pointer-events-none" />
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 shadow-brand-sm">
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -10,11 +11,11 @@ export function EmptyState({ title, description, action }) {
           />
         </svg>
       </div>
-      <h3 className="font-display text-lg font-semibold text-ink dark:text-white">{title}</h3>
+      <h3 className="font-display text-xl font-bold text-white tracking-tight">{title}</h3>
       {description && (
-        <p className="mt-2 max-w-sm text-sm text-ink-muted dark:text-slate-400">{description}</p>
+        <p className="mt-2.5 max-w-md text-sm text-slate-400 leading-relaxed">{description}</p>
       )}
-      {action && <div className="mt-6">{action}</div>}
+      {action && <div className="mt-6 relative z-10">{action}</div>}
     </div>
   );
 }

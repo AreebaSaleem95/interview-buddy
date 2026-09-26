@@ -11,11 +11,63 @@ import { StatCard, SectionHeader, ProgressRing } from '../components/ui/Premium'
 import { StatCardSkeleton, InterviewCardSkeleton } from '../components/ui/SkeletonLoader';
 import { getErrorMessage } from '../utils/errors';
 
+function IconClipboard({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+    </svg>
+  );
+}
+
+function IconCheckCircle({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function IconStar({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+    </svg>
+  );
+}
+
+function IconTarget({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 12H18M7.757 15.243l-1.59 1.59M6 12H4.5m15.364 6.364l-1.591-1.591M12 18.75a6.75 6.75 0 100-13.5 6.75 6.75 0 000 13.5z" />
+    </svg>
+  );
+}
+
+function IconLightbulb({ className = 'h-6 w-6' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+    </svg>
+  );
+}
+
+function difficultyBar(difficulty) {
+  if (difficulty === 'hard') return 'bg-rose-500';
+  if (difficulty === 'medium') return 'bg-amber-500';
+  return 'bg-emerald-500';
+}
+
+function difficultyBadge(difficulty) {
+  if (difficulty === 'hard') return 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
+  if (difficulty === 'medium') return 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
+  return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+}
+
 function statusBadge(status) {
   const map = {
-    completed: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/30',
-    'in-progress': 'bg-amber-50 text-amber-755 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-100 dark:border-amber-900/30',
-    pending: 'bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50'
+    completed: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30',
+    'in-progress': 'bg-amber-500/10 text-amber-400 border border-amber-500/30',
+    pending: 'bg-slate-800 text-slate-300 border border-slate-700'
   };
   return map[status] || map.pending;
 }
@@ -28,78 +80,58 @@ function InterviewCard({ interview, index }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
       className="h-full"
     >
-      <Link to={isCompleted ? `/results/${interview._id}` : `/interview/${interview._id}`}
+      <Link 
+        to={isCompleted ? `/results/${interview._id}` : `/interview/${interview._id}`}
         className="block h-full group focus-visible:outline-none"
       >
-        <Card
-          className="flex flex-col h-full min-h-[220px] justify-between transition-all duration-300 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-700 border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 backdrop-blur-sm relative overflow-hidden"
-        >
-          {/* Subtle gradient bar at the top */}
-          <div className={`absolute top-0 left-0 right-0 h-[3px] ${
-            interview.difficulty === 'hard'
-              ? 'bg-rose-500'
-              : interview.difficulty === 'medium'
-              ? 'bg-amber-500'
-              : 'bg-blue-500'
-          }`} />
+        <div className="flex flex-col h-full min-h-[220px] justify-between rounded-2xl border border-white/10 bg-slate-900/70 backdrop-blur-xl p-5 shadow-xl hover:-translate-y-1 hover:border-indigo-500/50 hover:shadow-brand-sm transition-all duration-300 relative overflow-hidden">
+          <div className={`absolute top-0 left-0 right-0 h-[3px] ${difficultyBar(interview.difficulty)}`} />
 
           <div className="pt-2">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-display font-semibold text-slate-950 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {interview.domain}
+                  <span className="font-display font-semibold text-white group-hover:text-indigo-400 transition-colors">
+                    {interview.domain ? interview.domain.toUpperCase() : 'GENERAL'}
                   </span>
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
-                    interview.difficulty === 'hard'
-                      ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300 border border-rose-100 dark:border-rose-900/20'
-                      : interview.difficulty === 'medium'
-                      ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300 border border-amber-100 dark:border-amber-900/20'
-                      : 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300 border border-blue-100 dark:border-blue-900/20'
-                  }`}>
-                    {interview.difficulty}
+                  <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${difficultyBadge(interview.difficulty)}`}>
+                    {interview.difficulty || 'medium'}
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  {isCompleted
-                    ? <>
-                        <span className="font-semibold text-blue-600 dark:text-blue-400">Score: {score}%</span>
-                        <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
-                        <span className="font-semibold text-slate-700 dark:text-slate-300">Grade {grade}</span>
-                      </>
-                    : <>
-                        <span className="font-semibold text-slate-650 dark:text-slate-300">Status:</span> {interview.status
-                          ? interview.status.replace('-', ' ').charAt(0).toUpperCase() +
-                            interview.status.replace('-', ' ').slice(1)
-                          : 'Pending'}
-                      </>
+                <p className="mt-2 text-xs text-slate-400">
+                  {interview.totalQuestions} Questions · {
+                    isCompleted ? `Final Grade: ${grade}` : 'Active session in progress'
                   }
                 </p>
               </div>
               {isCompleted && (
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
                   <div className="relative flex h-11 w-11 items-center justify-center">
-                    <ProgressRing percentage={parseInt(score)} size={44} strokeWidth={3} color={parseInt(score) >= 90 ? 'brand' : parseInt(score) >= 80 ? 'success' : parseInt(score) >= 60 ? 'warning' : 'danger'} />
-                    <span className="absolute text-[10px] font-bold text-slate-900 dark:text-slate-150">{score}%</span>
+                    <ProgressRing 
+                      percentage={parseInt(score)} 
+                      size={44} 
+                      strokeWidth={3} 
+                      color={parseInt(score) >= 90 ? 'brand' : parseInt(score) >= 80 ? 'success' : parseInt(score) >= 60 ? 'warning' : 'danger'} 
+                    />
+                    <span className="absolute text-[10px] font-bold text-white">{score}%</span>
                   </div>
                 </div>
               )}
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between gap-2 pt-4 border-t border-slate-100 dark:border-slate-800/80">
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+          <div className="mt-4 flex items-center justify-between gap-2 pt-4 border-t border-white/10">
+            <p className="text-xs text-slate-400">
               {interview.createdAt ? new Date(interview.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
             </p>
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${statusBadge(interview.status)}`}>
               {interview.status?.replace('-', ' ')}
             </span>
           </div>
-        </Card>
+        </div>
       </Link>
     </motion.div>
   );
@@ -144,26 +176,23 @@ export function DashboardPage() {
   const getMotivationalMessage = () => {
     if (!avgScore) return 'Start your first technical interview and get instant AI-driven reviews!';
     const score = parseFloat(avgScore);
-    if (score >= 90) return '🚀 Outstanding performance! You are fully prepared to ace your real interviews!';
-    if (score >= 80) return '✨ Great progress! You are on the right track to mastering these domains.';
-    if (score >= 70) return '💪 Good work! A few more practice sessions and you will lock in a top score!';
-    if (score >= 60) return '🎯 Consistent progress! Let\'s target the key feedback areas next.';
-    return '📈 Every session counts! Focus on the suggested improvements to boost your score.';
+    if (score >= 90) return 'Outstanding performance! You are fully prepared to ace your real interviews!';
+    if (score >= 80) return 'Great progress! You are on the right track to mastering these domains.';
+    if (score >= 70) return 'Good work! A few more practice sessions and you will lock in a top score!';
+    if (score >= 60) return 'Consistent progress! Let\'s target the key feedback areas next.';
+    return 'Every session counts! Focus on the suggested improvements to boost your score.';
   };
 
   if (loading) {
     return (
       <div className="space-y-10 max-w-7xl mx-auto">
-        {/* Skeleton Hero */}
-        <div className="h-64 rounded-3xl bg-slate-100 dark:bg-slate-900 animate-pulse border border-slate-200/50 dark:border-slate-800" />
-        {/* Skeleton Stats */}
+        <div className="h-64 rounded-3xl bg-slate-900/60 animate-pulse border border-white/10" />
         <div className="space-y-4">
-          <div className="h-6 w-32 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+          <div className="h-6 w-32 rounded bg-slate-800 animate-pulse" />
           <StatCardSkeleton count={4} />
         </div>
-        {/* Skeleton Interviews */}
         <div className="space-y-4">
-          <div className="h-6 w-40 rounded bg-slate-200 dark:bg-slate-800 animate-pulse" />
+          <div className="h-6 w-40 rounded bg-slate-800 animate-pulse" />
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <InterviewCardSkeleton />
             <InterviewCardSkeleton />
@@ -176,21 +205,24 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-10 max-w-7xl mx-auto">
-      {/* Hero Section */}
+      {/* Hero Welcome Banner */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative overflow-hidden rounded-3xl p-8 sm:p-10 lg:p-14 border border-primary/20"
-        style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(16,23,40,0.9) 60%, rgba(139,92,246,0.08) 100%)', boxShadow: '0 0 60px rgba(99,102,241,0.12), 0 4px 32px rgba(0,0,0,0.5)' }}
+        transition={{ duration: 0.4 }}
+        className="relative overflow-hidden rounded-4xl p-8 sm:p-10 lg:p-12 border border-indigo-500/20 bg-slate-900/80 shadow-2xl backdrop-blur-2xl"
       >
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-transparent pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-stretch gap-8 justify-between">
           <div className="flex-1 flex flex-col justify-center text-center lg:text-left">
-            <p className="text-sm font-semibold tracking-wider text-primary uppercase">Interactive Workspace</p>
-            <h1 className="mt-2 font-display text-4xl font-extrabold sm:text-5xl text-text-primary tracking-tight leading-none">
+            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-400 mb-3 w-fit mx-auto lg:mx-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse" />
+              Interactive Workspace
+            </div>
+            <h1 className="font-display text-3xl font-extrabold sm:text-5xl text-white tracking-tight leading-tight">
               {user?.name ? `Welcome back, ${user.name.split(' ')[0]}!` : 'Ready to practice?'}
             </h1>
-            <p className="mt-3 text-base sm:text-lg text-text-secondary max-w-xl leading-relaxed">
+            <p className="mt-3 text-base text-slate-300 max-w-xl leading-relaxed">
               {getMotivationalMessage()}
             </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -198,59 +230,49 @@ export function DashboardPage() {
                 <Button
                   size="lg"
                   variant="primary"
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto shadow-brand-sm font-semibold"
                 >
-                  Start New Interview
+                  Start New Interview →
                 </Button>
               </Link>
-              {completed > 0 && (
-                <Link to="/results">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                  >
-                    View Results Archive
-                  </Button>
-                </Link>
-              )}
             </div>
           </div>
-          {/* Right side stats banner */}
-          <div className="hidden lg:flex flex-col justify-center items-end min-w-[300px]">
+
+          <div className="hidden lg:flex flex-col justify-center items-end min-w-[280px]">
             <div className="grid grid-cols-2 gap-4 w-full">
-              <div className="rounded-2xl border border-border bg-surface/80 p-5 flex flex-col items-center shadow-card">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-xl mb-2">📝</div>
-                <div className="font-display text-2xl font-bold text-text-primary">{meta.total}</div>
-                <div className="text-xs text-text-muted mt-1 font-medium">Attempted</div>
+              <div className="rounded-2xl border border-white/10 bg-slate-800/80 p-5 flex flex-col items-center text-center backdrop-blur-md">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-2">
+                  <IconClipboard className="h-5 w-5" />
+                </div>
+                <div className="font-display text-2xl font-bold text-white">{meta.total}</div>
+                <div className="text-xs text-slate-400 mt-0.5 font-medium">Attempted</div>
               </div>
-              <div className="rounded-2xl border border-border bg-surface/80 p-5 flex flex-col items-center shadow-card">
-                <div className="w-10 h-10 rounded-xl bg-success/10 border border-success/20 flex items-center justify-center text-xl mb-2">⭐</div>
-                <div className="font-display text-2xl font-bold text-text-primary">{avgScore ? `${avgScore}%` : '—'}</div>
-                <div className="text-xs text-text-muted mt-1 font-medium">Avg Score</div>
+
+              <div className="rounded-2xl border border-white/10 bg-slate-800/80 p-5 flex flex-col items-center text-center backdrop-blur-md">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-2">
+                  <IconStar className="h-5 w-5" />
+                </div>
+                <div className="font-display text-2xl font-bold text-white">{avgScore ? `${avgScore}%` : '—'}</div>
+                <div className="text-xs text-slate-400 mt-0.5 font-medium">Avg Score</div>
               </div>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Stats Grid */}
+      {/* Performance Summary */}
       <div className="space-y-4">
-        <motion.div
-          initial={{ opacity: 0, y: -5 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.3 }}
-        >
-          <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white tracking-tight">Performance Summary</h2>
-        </motion.div>
+        <div className="border-l-4 border-indigo-500 pl-4">
+          <h2 className="font-display text-xl font-black text-white tracking-tight">Performance Summary</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Key metrics aggregated across all mock interview sessions</p>
+        </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Total Interviews"
             value={meta.total}
             hint="All sessions started"
-            icon="📝"
+            icon={<IconClipboard />}
             animate={true}
             index={0}
             className="h-full"
@@ -259,7 +281,7 @@ export function DashboardPage() {
             label="Completed"
             value={completed}
             hint={`${inProgress} active session${inProgress !== 1 ? 's' : ''}`}
-            icon="✅"
+            icon={<IconCheckCircle />}
             animate={true}
             index={1}
             className="h-full"
@@ -268,7 +290,7 @@ export function DashboardPage() {
             label="Average Score"
             value={avgScore ? `${avgScore}%` : '—'}
             hint={avgScore ? 'Targeting above 85%' : 'No graded sessions'}
-            icon="⭐"
+            icon={<IconStar />}
             animate={true}
             index={2}
             className="h-full"
@@ -277,7 +299,7 @@ export function DashboardPage() {
             label="Current Level"
             value={user?.experienceLevel ? user.experienceLevel.charAt(0).toUpperCase() + user.experienceLevel.slice(1) : 'Beginner'}
             hint="Based on domain selection"
-            icon="🎯"
+            icon={<IconTarget />}
             animate={true}
             index={3}
             className="h-full"
@@ -302,14 +324,14 @@ export function DashboardPage() {
 
       {/* Empty State */}
       {recent.length === 0 && (
-        <div className="py-12 border border-dashed border-slate-200 dark:border-slate-800 rounded-3xl bg-slate-50/50 dark:bg-slate-900/10">
+        <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-2 backdrop-blur-xl">
           <EmptyState
             title="Ready to begin?"
             description="Create your first AI-driven interview in seconds. Select your tech stack, role difficulty, and start answering custom scenario-based questions."
             action={
               <Link to="/interview/new">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-500 shadow-md">
-                  Launch Your First Interview
+                <Button size="lg" variant="primary" className="shadow-brand font-semibold">
+                  Launch Your First Interview →
                 </Button>
               </Link>
             }
@@ -317,26 +339,22 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Tips Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.4 }}
-        className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-md"
-      >
+      {/* Preparation Strategy Banner */}
+      <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 sm:p-7 shadow-xl backdrop-blur-xl">
         <div className="flex gap-4 items-start">
-          <div className="flex-shrink-0 text-2xl select-none">💡</div>
+          <div className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            <IconLightbulb className="h-5 w-5" />
+          </div>
           <div>
-            <h3 className="font-display font-semibold text-slate-900 dark:text-white">Preparation Strategy</h3>
-            <ul className="mt-2 space-y-1.5 text-sm text-slate-500 dark:text-slate-400">
-              <li>• <span className="font-medium text-slate-700 dark:text-slate-300">Simulate Real Environments:</span> Try to type out complete, well-formed answers without copying code blocks.</li>
-              <li>• <span className="font-medium text-slate-700 dark:text-slate-300">Review AI Recommendations:</span> Pay close attention to the Areas for Improvement and Model Answers in your Results.</li>
-              <li>• <span className="font-medium text-slate-700 dark:text-slate-300">Target Specific Topics:</span> Focus on category weaknesses (e.g. state management, system design) highlighted in category charts.</li>
+            <h3 className="font-display font-bold text-white text-base">Preparation Strategy & Tips</h3>
+            <ul className="mt-2.5 space-y-1.5 text-xs text-slate-400 leading-relaxed">
+              <li>• <span className="font-semibold text-slate-200">Simulate Real Environments:</span> Type out complete, well-formed answers without pasting generated code.</li>
+              <li>• <span className="font-semibold text-slate-200">Review AI Recommendations:</span> Pay close attention to the Areas for Improvement and Model Answers in your Results.</li>
+              <li>• <span className="font-semibold text-slate-200">Target Specific Topics:</span> Focus on category weaknesses (e.g. system design, edge cases) highlighted in your breakdown charts.</li>
             </ul>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

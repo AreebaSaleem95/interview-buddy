@@ -20,7 +20,7 @@ createRoot(document.getElementById('root')).render(
               gutter={12}
               toastOptions={{
                 duration: 4000,
-                className: '!rounded-xl !shadow-card dark:!bg-slate-800 dark:!text-slate-100',
+                className: '!rounded-xl !shadow-card !bg-white dark:!bg-surface-elevated !text-text-primary dark:!text-text-primary',
                 style: {
                   fontSize: '14px'
                 }

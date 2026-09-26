@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 const nav = [
-  { to: '/dashboard', label: 'Dashboard', icon: '⬡', end: true },
-  { to: '/interview/new', label: 'New Interview', icon: '◈' },
-  { to: '/profile', label: 'Profile', icon: '◉' },
+  { to: '/dashboard', label: 'Dashboard', end: true },
+  { to: '/interview/new', label: 'New Interview' },
+  { to: '/profile', label: 'Profile' },
 ];
 
 export function DashboardLayout() {
@@ -25,39 +25,40 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-text-primary flex flex-col">
-      {/* Header */}
-      <header
-        className="sticky top-0 z-40 border-b border-border"
-        style={{ background: 'rgba(4,6,15,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
-      >
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Left: Logo + Nav */}
-          <div className="flex items-center gap-6">
-            <Link to="/dashboard" className="flex items-center gap-2.5 group shrink-0">
+    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col relative overflow-x-hidden">
+      {/* Background with stock image ambience */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-0 opacity-20 bg-cover bg-center mix-blend-screen"
+        style={{ backgroundImage: "url('/images/dashboard-bg.jpg')" }}
+      />
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-transparent via-[#090D16]/80 to-[#090D16]" />
+
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-8">
+            <Link to="/dashboard" className="flex items-center gap-3 group shrink-0">
               <motion.div
-                whileHover={{ scale: 1.08 }}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-black text-white"
-                style={{ background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)', boxShadow: '0 0 16px rgba(99,102,241,0.5)' }}
+                whileHover={{ scale: 1.05 }}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-white shadow-brand-sm btn-primary-glow"
               >
                 AI
               </motion.div>
-              <span className="hidden font-display font-extrabold text-text-primary sm:inline text-sm tracking-tight group-hover:text-gradient transition-all">
+              <span className="font-display font-extrabold text-white text-base tracking-tight group-hover:text-indigo-400 transition-colors">
                 InterviewBuddy
               </span>
             </Link>
 
-            <nav className="hidden items-center gap-1 md:flex">
+            <nav className="hidden items-center gap-1.5 md:flex">
               {nav.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    `px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    `px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                       isActive
-                        ? 'bg-primary/10 text-primary border border-primary/20'
-                        : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
+                        ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shadow-brand-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     }`
                   }
                 >
@@ -67,14 +68,13 @@ export function DashboardLayout() {
             </nav>
           </div>
 
-          {/* Right: Theme + User */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="button"
               onClick={toggleTheme}
-              className="rounded-lg p-2 text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors border border-transparent hover:border-border"
+              className="rounded-xl p-2.5 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors border border-transparent hover:border-indigo-500/20"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
@@ -88,15 +88,12 @@ export function DashboardLayout() {
               )}
             </motion.button>
 
-            <div className="flex items-center gap-2 pl-2 border-l border-border">
-              <div
-                className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
-                style={{ background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)' }}
-              >
+            <div className="flex items-center gap-2.5 pl-3 border-l border-white/10">
+              <div className="h-8 w-8 rounded-xl flex items-center justify-center text-xs font-black text-white shrink-0 btn-primary-glow shadow-brand-sm">
                 {getInitials(user?.name)}
               </div>
-              <span className="hidden max-w-[110px] truncate text-sm font-medium text-text-secondary sm:inline">
-                {user?.name || 'User'}
+              <span className="hidden max-w-[130px] truncate text-sm font-semibold text-slate-300 sm:inline">
+                {user?.name || 'Engineer'}
               </span>
             </div>
 
@@ -105,26 +102,25 @@ export function DashboardLayout() {
               whileTap={{ scale: 0.97 }}
               type="button"
               onClick={handleLogout}
-              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-text-muted hover:text-error hover:bg-error/8 transition-colors border border-transparent hover:border-error/20"
+              className="rounded-xl px-3 py-2 text-xs font-semibold text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors border border-transparent hover:border-rose-500/20"
             >
               Sign out
             </motion.button>
           </div>
         </div>
 
-        {/* Mobile nav */}
-        <nav className="flex gap-1 overflow-x-auto border-t border-border px-4 py-2 md:hidden no-scrollbar"
-          style={{ background: 'rgba(4,6,15,0.9)' }}>
+        {/* Mobile Navigation */}
+        <nav className="flex gap-1 overflow-x-auto border-t border-white/10 px-4 py-2.5 md:hidden no-scrollbar bg-slate-950/90">
           {nav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-all shrink-0 ${
+                `whitespace-nowrap rounded-xl px-4 py-2 text-xs font-semibold transition-all shrink-0 ${
                   isActive
-                    ? 'bg-primary/10 text-primary border border-primary/20'
-                    : 'text-text-secondary hover:text-text-primary'
+                    ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`
               }
             >
@@ -134,15 +130,9 @@ export function DashboardLayout() {
         </nav>
       </header>
 
-      {/* Page content */}
-      <motion.main
-        className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 flex-grow w-full"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
+      <main className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 flex-grow w-full">
         <Outlet />
-      </motion.main>
+      </main>
     </div>
   );
 }

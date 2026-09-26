@@ -9,7 +9,6 @@ import {
 } from 'recharts';
 
 export default function ScoreTrendChart({ data = [] }) {
-  // Map index + 1 as question label if not present
   const formattedData = data.map((item, idx) => ({
     question: item.question || `Q${idx + 1}`,
     score: item.score || 0,
@@ -18,9 +17,9 @@ export default function ScoreTrendChart({ data = [] }) {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="rounded-xl border border-slate-100 bg-white/90 p-3 shadow-lg backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
-          <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
+        <div className="rounded-xl border border-indigo-500/30 bg-slate-900/95 p-3 shadow-2xl backdrop-blur-md">
+          <p className="text-xs font-semibold text-slate-400">{label}</p>
+          <p className="text-sm font-bold text-indigo-400 mt-0.5">
             Score: {payload[0].value}/10
           </p>
         </div>
@@ -30,22 +29,22 @@ export default function ScoreTrendChart({ data = [] }) {
   };
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-64 w-full rounded-xl bg-slate-950/50 border border-white/10 p-2">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={formattedData}
-          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+          margin={{ top: 12, right: 12, left: -20, bottom: 4 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:stroke-slate-800" />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
           <XAxis
             dataKey="question"
-            stroke="#94a3b8"
+            stroke="#94A3B8"
             fontSize={12}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
-            stroke="#94a3b8"
+            stroke="#94A3B8"
             fontSize={12}
             domain={[0, 10]}
             tickLine={false}
@@ -56,11 +55,11 @@ export default function ScoreTrendChart({ data = [] }) {
           <Line
             type="monotone"
             dataKey="score"
-            stroke="#3b82f6"
+            stroke="#6366F1"
             strokeWidth={3}
-            dot={{ r: 4, stroke: '#3b82f6', strokeWidth: 2, fill: '#fff' }}
-            activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2, fill: '#3b82f6' }}
-            animationDuration={1500}
+            dot={{ r: 4, stroke: '#6366F1', strokeWidth: 2, fill: '#8B5CF6' }}
+            activeDot={{ r: 6, stroke: '#8B5CF6', strokeWidth: 2, fill: '#A855F7' }}
+            animationDuration={1200}
           />
         </LineChart>
       </ResponsiveContainer>

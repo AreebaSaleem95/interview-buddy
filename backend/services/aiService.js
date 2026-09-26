@@ -6,18 +6,32 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 /**
  * Generate a dynamic scenario question using AI.
  */
-const generateQuestion = async (domain, difficulty, topic = null) => {
+const normalizeResponseArray = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object') {
+    if (Array.isArray(data.questions)) return data.questions;
+    if (Array.isArray(data.items)) return data.items;
+    if (Array.isArray(data.results)) return data.results;
+    if (data.data && Array.isArray(data.data.questions)) return data.data.questions;
+    if (data.question) return [data];
+  }
+  return [];
+};
+
+const generateQuestion = async (domain, difficulty, numQuestions = 1, topic = null) => {
   try {
     const res = await axios.post(`${AI_SERVICE_URL}/generate-question`, {
       domain,
       difficulty,
-      topic
-    }, { timeout: 8000 });
+      topic,
+      numQuestions
+    }, { timeout: 12000 });
 
-    if (res.data && res.data.question) {
+    const normalized = normalizeResponseArray(res.data);
+    if (normalized.length > 0) {
       return {
         success: true,
-        data: res.data
+        data: normalized
       };
     }
   } catch (err) {

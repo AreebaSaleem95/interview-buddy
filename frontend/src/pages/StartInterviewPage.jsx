@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { startInterview } from '../api/interviewsApi';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { SelectField } from '../components/ui/SelectField';
 import { getErrorMessage } from '../utils/errors';
@@ -16,9 +15,9 @@ const DOMAINS = [
 ];
 
 const DIFFICULTIES = [
-  { value: 'easy', label: 'Easy', icon: '🌱', desc: 'Foundational concepts & syntax' },
-  { value: 'medium', label: 'Medium', icon: '⚡', desc: 'Mid-level principles & trade-offs' },
-  { value: 'hard', label: 'Hard', icon: '🔥', desc: 'System scale, bottlenecks & edge-cases' }
+  { value: 'easy', label: 'Easy', icon: '🌱', desc: 'Foundational concepts & syntax', border: 'border-emerald-500', glow: 'bg-emerald-500/10 text-emerald-400' },
+  { value: 'medium', label: 'Medium', icon: '⚡', desc: 'Mid-level principles & trade-offs', border: 'border-amber-500', glow: 'bg-amber-500/10 text-amber-400' },
+  { value: 'hard', label: 'Hard', icon: '🔥', desc: 'System scale, bottlenecks & edge-cases', border: 'border-rose-500', glow: 'bg-rose-500/10 text-rose-400' }
 ];
 
 export function StartInterviewPage() {
@@ -56,12 +55,12 @@ export function StartInterviewPage() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <p className="text-xs font-bold tracking-wider text-blue-600 dark:text-blue-400 uppercase">Step 1: Configuration</p>
-        <h1 className="mt-1 font-display text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">
+        <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase">Step 1: Configuration</p>
+        <h1 className="mt-1.5 font-display text-3xl sm:text-4xl font-extrabold text-white leading-tight">
           Initialize New Mock Session
         </h1>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-          Customize your experience by selecting a focus domain and difficulty target. AI will generate specialized scenarios.
+        <p className="mt-2 text-sm text-slate-400 max-w-md mx-auto">
+          Customize your experience by selecting a focus domain and difficulty target. AI will generate specialized scenario-based questions.
         </p>
       </motion.div>
 
@@ -69,36 +68,34 @@ export function StartInterviewPage() {
         
         {/* Domain Visual Grid */}
         <div className="space-y-3">
-          <label className="text-sm font-bold text-slate-800 dark:text-slate-350 uppercase tracking-wider block">
+          <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
             1. Select Tech Focus
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             {DOMAINS.map((d) => {
               const selected = domain === d.value;
               return (
-                <motion.div
+                <div
                   key={d.value}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
                   onClick={() => setDomain(d.value)}
                   className={`cursor-pointer rounded-2xl border p-5 transition-all flex items-start gap-4 ${
                     selected
-                      ? 'border-blue-600 bg-blue-50/20 dark:border-blue-500 dark:bg-blue-950/20 shadow-md ring-1 ring-blue-500/20'
-                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-850 dark:bg-slate-900/40 dark:hover:border-slate-700'
+                      ? 'border-indigo-500 bg-indigo-500/15 ring-2 ring-indigo-500/30 shadow-brand-sm text-white'
+                      : 'border-white/10 bg-slate-900/70 hover:border-indigo-500/40 hover:bg-slate-800/80 text-slate-300'
                   }`}
                 >
-                  <span className="text-3xl p-2 bg-slate-100 dark:bg-slate-950 rounded-xl select-none">
+                  <span className="text-2xl p-2.5 bg-slate-800/90 rounded-xl select-none shrink-0 border border-white/5">
                     {d.icon}
                   </span>
                   <div>
-                    <h3 className="font-semibold text-slate-905 dark:text-white text-sm">
+                    <h3 className={`font-semibold text-sm ${selected ? 'text-white' : 'text-slate-100'}`}>
                       {d.label}
                     </h3>
-                    <p className="text-xs text-slate-450 dark:text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                       {d.desc}
                     </p>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
           </div>
@@ -106,48 +103,45 @@ export function StartInterviewPage() {
 
         {/* Difficulty Visual Grid */}
         <div className="space-y-3">
-          <label className="text-sm font-bold text-slate-800 dark:text-slate-350 uppercase tracking-wider block">
+          <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
             2. Choose Difficulty Level
           </label>
           <div className="grid gap-4 sm:grid-cols-3">
             {DIFFICULTIES.map((df) => {
               const selected = difficulty === df.value;
               return (
-                <motion.div
+                <div
                   key={df.value}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
                   onClick={() => setDifficulty(df.value)}
                   className={`cursor-pointer rounded-2xl border p-4 text-center transition-all flex flex-col items-center justify-center ${
                     selected
-                      ? 'border-blue-600 bg-blue-50/20 dark:border-blue-500 dark:bg-blue-950/20 shadow-md ring-1 ring-blue-500/20'
-                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-850 dark:bg-slate-900/40 dark:hover:border-slate-700'
+                      ? `${df.border} ${df.glow} ring-2 ring-indigo-500/30 shadow-lg`
+                      : 'border-white/10 bg-slate-900/70 hover:border-slate-700 hover:bg-slate-800/80 text-slate-300'
                   }`}
                 >
                   <span className="text-2xl mb-2 select-none">{df.icon}</span>
-                  <h3 className="font-semibold text-slate-905 dark:text-white text-sm">
+                  <h3 className={`font-semibold text-sm ${selected ? 'text-white font-bold' : 'text-slate-200'}`}>
                     {df.label}
                   </h3>
-                  <p className="text-[11px] text-slate-450 dark:text-slate-455 mt-1 leading-normal">
+                  <p className="text-[11px] text-slate-400 mt-1 leading-normal">
                     {df.desc}
                   </p>
-                </motion.div>
+                </div>
               );
             })}
           </div>
         </div>
 
         {/* Question Count Select */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white/50 p-6 dark:border-slate-800 dark:bg-slate-900/40 backdrop-blur-sm shadow-sm space-y-4 max-w-md mx-auto">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-6 backdrop-blur-xl shadow-xl space-y-4 max-w-md mx-auto">
           <SelectField
             id="count"
             label="3. Session Length"
             value={String(numberOfQuestions)}
             onChange={(e) => setNumberOfQuestions(Number(e.target.value))}
-            className="dark:bg-slate-950 focus:ring-blue-500/20"
           >
             {[3, 5, 7, 10, 15, 20].map((n) => (
-              <option key={n} value={n}>
+              <option key={n} value={n} className="bg-slate-900 text-white">
                 {n} Interview Scenarios
               </option>
             ))}
@@ -155,21 +149,21 @@ export function StartInterviewPage() {
         </div>
 
         {/* Action Button Controls */}
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4 border-t border-slate-205 dark:border-slate-850">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4 border-t border-white/10">
           <Button 
             type="button" 
             variant="secondary" 
             onClick={() => navigate('/dashboard')}
-            className="w-full sm:w-auto border-slate-200 hover:bg-slate-100"
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>
           <Button 
             type="submit" 
             loading={loading}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-medium"
+            className="w-full sm:w-auto shadow-brand"
           >
-            Launch Interview Session
+            Launch Interview Session →
           </Button>
         </div>
 

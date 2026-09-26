@@ -38,6 +38,7 @@ class GenerateQuestionRequest(BaseModel):
     domain: str
     difficulty: str
     topic: Optional[str] = None
+    numQuestions: Optional[int] = 1
 
 class GenerateQuestionResponse(BaseModel):
     question: str
@@ -88,18 +89,80 @@ class GenerateReportResponse(BaseModel):
 def get_gemini_json(prompt: str, model_name: str = "gemini-1.5-flash") -> Optional[dict]:
     if not gemini_key:
         return None
-    try:
-        model = genai.GenerativeModel(
-            model_name,
-            generation_config={"response_mime_type": "application/json"}
-        )
-        response = model.generate_content(prompt)
-        text = response.text.strip()
-        return json.loads(text)
-    except Exception as e:
-        print(f"Gemini API Error: {e}")
-        # Let it return None so the fallback simulator handles it
-        return None
+
+    import time
+
+    attempts = 0
+    while attempts < 3:
+        attempts += 1
+        try:
+            model = genai.GenerativeModel(
+                model_name,
+                generation_config={"response_mime_type": "application/json"}
+            )
+
+            # Try a few possible SDK method names for different versions
+            resp = None
+            for method in ("generate_content", "generate", "create", "generate_text"):
+                if hasattr(model, method):
+                    resp = getattr(model, method)(prompt)
+                    break
+
+            if not resp:
+                for method in ("generate_text", "generate_content"):
+                    if hasattr(genai, method):
+                        resp = getattr(genai, method)(prompt)
+                        break
+
+            if not resp:
+                raise Exception("No supported generate method found in Gemini SDK")
+
+            # Normalize response to text
+            text = None
+            try:
+                if hasattr(resp, "text") and resp.text:
+                    text = resp.text.strip()
+                elif isinstance(resp, dict):
+                    # common shapes: {"candidates": [{"content": "..."}]}
+                    if "candidates" in resp and len(resp["candidates"]) > 0:
+                        cand = resp["candidates"][0]
+                        if isinstance(cand, dict):
+                            for k in ("content", "output", "text"):
+                                if k in cand and cand[k]:
+                                    text = cand[k]
+                                    break
+                    if not text and "output" in resp:
+                        text = resp.get("output")
+                elif hasattr(resp, "candidates") and resp.candidates:
+                    cand = resp.candidates[0]
+                    if hasattr(cand, "content"):
+                        text = cand.content
+                    elif hasattr(cand, "text"):
+                        text = cand.text
+            except Exception:
+                text = None
+
+            if not text:
+                text = str(resp)
+
+            # Attempt to parse JSON output
+            try:
+                return json.loads(text)
+            except Exception as e:
+                # If JSON parse fails, surface a helpful debug message and fallback
+                print(f"Gemini JSON parse error: {e}; raw_response_preview={text[:400]}")
+                return None
+
+        except Exception as e:
+            errstr = str(e)
+            print(f"Gemini API Error (attempt {attempts}): {errstr}")
+            # Handle rate-limiting by retrying with backoff
+            if "429" in errstr or "rate" in errstr.lower():
+                if attempts < 3:
+                    time.sleep(2 ** attempts)
+                    continue
+            # For other errors, stop retrying and allow fallback
+            return None
 
 # -------------------------------------------------------------
 # Local Fallbacks (Simulator)
@@ -246,32 +309,80 @@ def simulate_generate_report(questions: list) -> dict:
 # -------------------------------------------------------------
 # Endpoints
 # -------------------------------------------------------------
-@app.post("/generate-question", response_model=GenerateQuestionResponse)
+def normalize_question_array(data):
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        for key in ('questions', 'items', 'results', 'data'):
+            value = data.get(key)
+            if isinstance(value, list):
+                return value
+        if 'question' in data:
+            return [data]
+    return []
+
+@app.post("/generate-question", response_model=List[GenerateQuestionResponse])
 async def generate_question(req: GenerateQuestionRequest):
+    num = max(1, int(req.numQuestions or 1))
+
     if gemini_key:
         topic_str = f"focusing on the topic '{req.topic}'" if req.topic else "focusing on a key technical concept in this domain"
         prompt = f"""
-        Generate a highly professional technical interview question for a {req.difficulty} level {req.domain} engineering position, {topic_str}.
-        The question should be scenario-based or design-based (like Linear/Notion/Vercel standard) encouraging candidates to write complete paragraphs.
-        
-        Provide the output in JSON format with the following keys:
-        - "question": string, the full question text
-        - "expectedTopics": list of strings, 3 to 6 key technical terms, design trade-offs, or protocols that the candidate's answer should reference.
-        - "evaluationCriteria": list of strings, 3 to 4 grading points for evaluating the response.
-        
-        Ensure you return ONLY the raw JSON object. Do not wrap it in markdown code blocks.
+        Generate {num} unique, independent, non-repeating, high-quality technical interview questions for a {req.difficulty} level {req.domain} engineering position, {topic_str}.
+        Each question should be scenario-based or design-based, encouraging candidates to write complete paragraphs.
+
+        Return ONLY a JSON array of objects with this exact structure:
+        [
+          {{"question": "...", "expectedTopics": ["..."], "evaluationCriteria": ["..."]}},
+          ...
+        ]
+
+        Requirements:
+        - Return exactly {num} objects in the array.
+        - Each object must include keys: "question", "expectedTopics" (3-6 strings), and "evaluationCriteria" (3-4 strings).
+        - Do not include any explanatory text, markdown, or metadata — ONLY the raw JSON array.
+        - Ensure questions are unique and independent.
         """
-        data = get_gemini_json(prompt)
-        if data and "question" in data:
-            return GenerateQuestionResponse(
-                question=data["question"],
-                expectedTopics=data.get("expectedTopics", []),
-                evaluationCriteria=data.get("evaluationCriteria", [])
-            )
-            
-    # Fallback/simulation
-    res = simulate_generate_question(req.domain, req.difficulty, req.topic)
-    return GenerateQuestionResponse(**res)
+        data = normalize_question_array(get_gemini_json(prompt))
+        if data:
+            results = []
+            seen = set()
+            for item in data:
+                if not isinstance(item, dict) or 'question' not in item:
+                    continue
+                question_text = item.get('question')
+                if not question_text or question_text in seen:
+                    continue
+                seen.add(question_text)
+                results.append({
+                    'question': question_text,
+                    'expectedTopics': item.get('expectedTopics', []),
+                    'evaluationCriteria': item.get('evaluationCriteria', [])
+                })
+                if len(results) >= num:
+                    break
+
+            while len(results) < num:
+                s = simulate_generate_question(req.domain, req.difficulty, req.topic)
+                if s['question'] not in seen:
+                    seen.add(s['question'])
+                    results.append(s)
+
+            return [GenerateQuestionResponse(**r) for r in results[:num]]
+
+    # Fallback/simulation for when Gemini is not configured or failed
+    results = []
+    seen = set()
+    attempts = 0
+    while len(results) < num and attempts < num * 5:
+        attempts += 1
+        s = simulate_generate_question(req.domain, req.difficulty, req.topic)
+        if s['question'] not in seen:
+            seen.add(s['question'])
+            results.append(s)
+    while len(results) < num:
+        results.append({'question': f'Placeholder question #{len(results)+1}', 'expectedTopics': [], 'evaluationCriteria': []})
+    return [GenerateQuestionResponse(**r) for r in results]
 
 
 @app.post("/evaluate-answer", response_model=EvaluateAnswerResponse)

@@ -2,6 +2,7 @@ const Interview = require('../models/Interview');
 const Question = require('../models/Question');
 const User = require('../models/User');
 const Result = require('../models/Result');
+const logger = require('../config/logger');
 const aiService = require('../services/aiService');
 const { createInterviewValidation, paginationValidation } = require('../utils/validation');
 
@@ -19,26 +20,58 @@ const startInterview = async (req, res, next) => {
     const { domain, difficulty, numberOfQuestions, type: questionType } = value;
 
     let interviewQuestions = [];
-    
-    // Attempt dynamic AI-powered question generation
-    const aiPromises = Array.from({ length: numberOfQuestions }).map(() =>
-      aiService.generateQuestion(domain, difficulty)
-    );
-    const aiResults = await Promise.all(aiPromises);
-    const generatedQuestions = aiResults
-      .filter(res => res.success && res.data)
-      .map(res => ({
-        questionText: res.data.question,
-        expectedTopics: res.data.expectedTopics || [],
-        evaluationCriteria: res.data.evaluationCriteria || [],
-        score: 0,
-        feedback: ''
-      }));
 
-    if (generatedQuestions.length === numberOfQuestions) {
-      interviewQuestions = generatedQuestions;
-    } else {
-      // Fallback: load static questions from MongoDB
+    // Attempt dynamic AI-powered question generation (bulk request)
+    try {
+      const aiRes = await aiService.generateQuestion(domain, difficulty, numberOfQuestions);
+      if (aiRes.success && Array.isArray(aiRes.data) && aiRes.data.length > 0) {
+        const generatedQuestions = aiRes.data
+          .filter(item => item && item.question)
+          .slice(0, numberOfQuestions)
+          .map(item => ({
+            questionText: item.question,
+            expectedTopics: item.expectedTopics || [],
+            evaluationCriteria: item.evaluationCriteria || [],
+            score: 0,
+            feedback: ''
+          }));
+
+        if (generatedQuestions.length > 0) {
+          interviewQuestions = generatedQuestions;
+        }
+      }
+    } catch (err) {
+      logger.warn('Bulk AI generate-question call failed, will fallback to DB.', { message: err.message });
+    }
+
+    // If bulk AI generation returned some questions but not enough, attempt to fill the remainder
+    if (interviewQuestions.length > 0 && interviewQuestions.length < numberOfQuestions) {
+      const remainder = numberOfQuestions - interviewQuestions.length;
+      try {
+        const extraRes = await aiService.generateQuestion(domain, difficulty, remainder);
+        if (extraRes.success && Array.isArray(extraRes.data) && extraRes.data.length > 0) {
+          const existingQuestions = new Set(interviewQuestions.map((q) => q.questionText));
+          const extraQuestions = extraRes.data
+            .filter((item) => item && item.question && !existingQuestions.has(item.question))
+            .slice(0, remainder)
+            .map((item) => ({
+              questionText: item.question,
+              expectedTopics: item.expectedTopics || [],
+              evaluationCriteria: item.evaluationCriteria || [],
+              score: 0,
+              feedback: ''
+            }));
+
+          interviewQuestions = interviewQuestions.concat(extraQuestions);
+        }
+      } catch (err) {
+        logger.warn('Bulk AI extra generation failed, will fallback to DB for remaining slots.', { message: err.message });
+      }
+    }
+
+    // If we still do not have enough questions, supplement from DB
+    if (interviewQuestions.length < numberOfQuestions) {
+      const remainingCount = numberOfQuestions - interviewQuestions.length;
       const activeTotal = await Question.countDocuments({ isActive: true });
       if (activeTotal === 0) {
         return res.status(400).json({
@@ -51,11 +84,11 @@ const startInterview = async (req, res, next) => {
       const questions = await Question.getRandomQuestions(
         domain,
         difficulty,
-        numberOfQuestions,
+        remainingCount,
         questionType || null
       );
 
-      if (questions.length === 0) {
+      if (questions.length === 0 && interviewQuestions.length === 0) {
         return res.status(400).json({
           success: false,
           message: 'No questions available for the selected criteria',
@@ -63,13 +96,58 @@ const startInterview = async (req, res, next) => {
         });
       }
 
-      interviewQuestions = questions.map(q => ({
-        questionId: q._id,
-        questionText: q.question,
-        expectedAnswer: q.expectedAnswer,
-        expectedTopics: [domain, difficulty],
-        evaluationCriteria: ['Technical accuracy', 'Trade-offs']
-      }));
+      interviewQuestions = interviewQuestions.concat(
+        questions.map((q) => ({
+          questionId: q._id,
+          questionText: q.question,
+          expectedAnswer: q.expectedAnswer,
+          expectedTopics: [domain, difficulty],
+          evaluationCriteria: ['Technical accuracy', 'Trade-offs']
+        }))
+      );
+    }
+
+    if (interviewQuestions.length < numberOfQuestions) {
+      const remainingCount = numberOfQuestions - interviewQuestions.length;
+      try {
+        const extraRes = await aiService.generateQuestion(domain, difficulty, remainingCount);
+        if (extraRes.success && Array.isArray(extraRes.data) && extraRes.data.length > 0) {
+          const existingQuestions = new Set(interviewQuestions.map((q) => q.questionText));
+          const extraQuestions = extraRes.data
+            .filter((item) => item && item.question && !existingQuestions.has(item.question))
+            .slice(0, remainingCount)
+            .map((item) => ({
+              questionText: item.question,
+              expectedTopics: item.expectedTopics || [],
+              evaluationCriteria: item.evaluationCriteria || [],
+              score: 0,
+              feedback: ''
+            }));
+          interviewQuestions = interviewQuestions.concat(extraQuestions);
+        }
+      } catch (err) {
+        logger.warn('Final AI fill failed, proceeding with available questions.', { message: err.message });
+      }
+    }
+
+    if (interviewQuestions.length < numberOfQuestions) {
+      const existingQuestions = new Set(interviewQuestions.map((q) => q.questionText));
+      while (interviewQuestions.length < numberOfQuestions) {
+        let fallbackQuestion = `Autogenerated fallback question ${interviewQuestions.length + 1}`;
+        let suffix = 1;
+        while (existingQuestions.has(fallbackQuestion)) {
+          suffix += 1;
+          fallbackQuestion = `Autogenerated fallback question ${interviewQuestions.length + 1} (${suffix})`;
+        }
+        existingQuestions.add(fallbackQuestion);
+        interviewQuestions.push({
+          questionText: fallbackQuestion,
+          expectedTopics: [domain, difficulty],
+          evaluationCriteria: ['Technical accuracy', 'Trade-offs'],
+          score: 0,
+          feedback: ''
+        });
+      }
     }
 
     const interview = await Interview.create({

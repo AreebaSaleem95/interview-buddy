@@ -12,19 +12,19 @@ export function Button({
   ...props
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed select-none";
+    "inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed select-none btn-focus";
 
   const variants = {
     primary:
-      "btn-primary-glow text-white border border-primary/30",
+      "btn-primary-glow text-white border border-indigo-400/30 shadow-brand-sm",
     secondary:
-      "bg-surface-elevated border border-border text-text-primary hover:border-primary/50 hover:bg-primary/10",
+      "bg-slate-800/90 border border-slate-700/80 text-slate-100 hover:border-indigo-500/50 hover:bg-slate-700/90 shadow-sm",
     danger:
-      "bg-error/10 border border-error/30 text-error hover:bg-error/20",
+      "bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/50",
     ghost:
-      "bg-transparent text-text-secondary hover:bg-surface-elevated hover:text-text-primary border border-transparent hover:border-border",
+      "bg-transparent text-slate-400 hover:bg-slate-800/60 hover:text-white border border-transparent hover:border-slate-700",
     outline:
-      "bg-transparent border border-border text-text-primary hover:border-primary/60 hover:bg-primary/8",
+      "bg-transparent border border-slate-700 text-slate-200 hover:border-indigo-500/60 hover:bg-indigo-500/10",
   };
 
   const sizes = {
